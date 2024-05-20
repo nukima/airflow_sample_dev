@@ -47,10 +47,12 @@ def example_dynamic_task_mapping():
         # resulting list/dictionary can be stored in the current XCom backend.
         return [1, 2, {"a": "b"}, "str"]
 
-    @task(max_active_tis_per_dagrun=2)
+    @task(max_active_tis_per_dagrun=1)
     def consumer(arg1, arg2):
+        import time
         print(arg1)
         print(arg2)
+        time.sleep(5)
 
     consumer.partial(arg2='constant').expand(arg1=make_list())
 

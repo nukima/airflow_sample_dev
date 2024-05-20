@@ -1,30 +1,28 @@
 import json
+import pendulum
+from airflow.decorators import dag, task
 
-from airflow.decorators import (
-    dag,
-    task,
-)
-from pendulum import datetime
-
+default_args = {
+    'owner': 'manhnk9'
+}
 
 @dag(
-    schedule="@daily",
-    start_date=datetime(2023, 1, 1),
+    default_args=default_args,
+    schedule=None,
+    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
-    default_args={
-        "retries": 2,  # If a task fails, it will retry 2 times.
-    },
-    tags=["example"],
-)  # If set, this tag is shown in the DAG view of the Airflow UI
-def example_dag_basic():
+    tags=['example'],
+    max_consecutive_failed_dag_runs=3,
+)
+def tutorial_taskflow_api_etl():
     @task()
     def extract():
         data_string = '{"1001": 301.27, "1002": 433.21, "1003": 502.22}'
 
         order_data_dict = json.loads(data_string)
         return order_data_dict
-
-    @task(multiple_outputs=True)  # multiple_outputs=True unrolls dictionaries into separate XCom values
+    
+    @task(multiple_outputs=True)
     def transform(order_data_dict: dict):
         total_order_value = 0
 
@@ -32,7 +30,7 @@ def example_dag_basic():
             total_order_value += value
 
         return {"total_order_value": total_order_value}
-
+    
     @task()
     def load(total_order_value: float):
         print(f"Total order value is: {total_order_value:.2f}")
@@ -41,5 +39,5 @@ def example_dag_basic():
     order_summary = transform(order_data)
     load(order_summary["total_order_value"])
 
-
-example_dag_basic()
+    
+tutorial_etl_dag = tutorial_taskflow_api_etl()
